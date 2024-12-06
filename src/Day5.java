@@ -6,7 +6,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Day5 {
+
     public static void main(String[] args) throws Exception {
+
+        // read file
         File file = new File("./src/resources/day5_input.txt");
         BufferedReader reader = new BufferedReader(new FileReader(file));
 
