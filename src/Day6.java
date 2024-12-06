@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Day6 {
@@ -27,7 +28,7 @@ public class Day6 {
             matrix[i] = allLines.get(i);
         }
 
-        printMatrix(matrix);
+        // printMatrix(matrix);
 
         // entering matrix and finding start position
         List<Integer> firstGuardPosition = new ArrayList<>();
@@ -40,38 +41,71 @@ public class Day6 {
             }
         }
 
+        // part one
         var linePosition = firstGuardPosition.get(0);
         var columnPosition = firstGuardPosition.get(1);
-        do {
-            var lastPlaceVisited = moveGuard(matrix, linePosition, columnPosition);
+        var partOneMatrix = matrix;
+        partOneMatrix = partOne(partOneMatrix, linePosition, columnPosition);
+
+        // looking for X footprints
+        var xCount = 0;
+        for (int i = 0; i < partOneMatrix.length; i++) {
+            for (int j = 0; j < partOneMatrix[i].length; j++) {
+                if (partOneMatrix[i][j] == 'X') {
+                    xCount++;
+                }
+            }
+        }
+        // System.out.println(xCount);
+
+        // part two
+        var loopCount = 0;
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[i].length; j++) {
+                if (matrix[i][j] != '#' && matrix[i][j] != '^') {
+                    var newMatrix = copyMatrix(matrix);
+                    newMatrix[i][j] = '#';
+
+                    var movingAroundResult = partOne(newMatrix, linePosition, columnPosition);
+                    var loopSecretResult = new char[][]{{'?'}};
+
+                    if (Arrays.deepEquals(movingAroundResult, loopSecretResult)) {
+                        loopCount++;
+                    }
+                }
+            }
+        }
+
+        System.out.println("Guard is looping in these alternate realities! :O");
+        System.out.println("How many realities? " + loopCount);
+    }
+
+    private static char[][] partOne(char[][] partOneMatrix, int linePosition, int columnPosition) {
+        var loopCount = 0;
+        while (loopCount < 200) {
+            var lastPlaceVisited = moveGuard(partOneMatrix, linePosition, columnPosition);
             if (lastPlaceVisited.isEmpty()) {
                 break;
             }
 
             var oldLinePosition = lastPlaceVisited.get(0);
             var oldColumnPosition = lastPlaceVisited.get(1);
-            printMatrix(matrix);
+            // printMatrix(partOneMatrix);
 
-            matrix = rotateMatrix90DegreesToLeft(matrix);
-            printMatrix(matrix);
+            partOneMatrix = rotateMatrix90DegreesToLeft(partOneMatrix);
+            // printMatrix(partOneMatrix);
 
             // when a matrix rotates to the left, [i][j] becomes [n - 1 - j][i] (n = matrix size)
             columnPosition = oldLinePosition;
-            linePosition = size - 1 - oldColumnPosition;
-        } while (true);
+            linePosition = partOneMatrix.length - 1 - oldColumnPosition;
 
-        // looking for X footprints
-        printMatrix(matrix);
-        var xCount = 0;
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                if (matrix[i][j] == 'X') {
-                    xCount++;
-                }
+            loopCount++;
+            if (loopCount == 199) {
+                return new char[][]{{'?'}};
             }
         }
 
-        System.out.println(xCount);
+        return partOneMatrix;
     }
 
     private static List<Integer> moveGuard(char[][] matrix, int line, int column) {
@@ -121,5 +155,13 @@ public class Day6 {
             System.out.println();
         }
         System.out.println("-------------------");
+    }
+
+    private static char[][] copyMatrix(char[][] original) {
+        char[][] copy = new char[original.length][];
+        for (int i = 0; i < original.length; i++) {
+            copy[i] = original[i].clone();
+        }
+        return copy;
     }
 }
