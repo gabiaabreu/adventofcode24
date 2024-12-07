@@ -1,9 +1,7 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Day6 {
 
@@ -81,12 +79,34 @@ public class Day6 {
     }
 
     private static char[][] partOne(char[][] partOneMatrix, int linePosition, int columnPosition) {
-        var loopCount = 0;
-        while (loopCount < 200) {
+        int i = 0;
+
+        Map<Integer, Integer> placesVisitedOnMapA = new HashMap<>();
+        Map<Integer, Integer> placesVisitedOnMapB = new HashMap<>();
+        Map<Integer, Integer> placesVisitedOnMapC = new HashMap<>();
+        Map<Integer, Integer> placesVisitedOnMapD = new HashMap<>();
+
+        List<Map<Integer, Integer>> allPlacesVisited = Arrays.asList(
+                placesVisitedOnMapA,
+                placesVisitedOnMapB,
+                placesVisitedOnMapC,
+                placesVisitedOnMapD
+        );
+
+        while (true) {
             var lastPlaceVisited = moveGuard(partOneMatrix, linePosition, columnPosition);
             if (lastPlaceVisited.isEmpty()) {
                 break;
             }
+
+            Map<Integer, Integer> targetMap = allPlacesVisited.get(i);
+            if (targetMap.containsKey(lastPlaceVisited.getFirst())
+                    && Objects.equals(targetMap.get(lastPlaceVisited.getFirst()), lastPlaceVisited.get(1))) {
+                // guard has been here before!
+                return new char[][]{{'?'}};
+            }
+
+            targetMap.put(lastPlaceVisited.getFirst(), lastPlaceVisited.get(1));
 
             var oldLinePosition = lastPlaceVisited.get(0);
             var oldColumnPosition = lastPlaceVisited.get(1);
@@ -99,9 +119,10 @@ public class Day6 {
             columnPosition = oldLinePosition;
             linePosition = partOneMatrix.length - 1 - oldColumnPosition;
 
-            loopCount++;
-            if (loopCount == 199) {
-                return new char[][]{{'?'}};
+
+            i++;
+            if (i == 4) {
+                i = 0;
             }
         }
 
