@@ -130,7 +130,7 @@ public class Day5 {
             }
         }
 
-        // topological sort
+        // topological sort - Kahn's Algorithm
         // this queue stores values that have no dependency on others (inDegree = 0)
         Queue<Integer> safeQueue = new LinkedList<>();
         for (Map.Entry<Integer, Integer> degree : inDegree.entrySet()) {
