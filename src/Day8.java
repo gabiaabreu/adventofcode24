@@ -52,13 +52,11 @@ public class Day8 {
 
             for (int i = 0; i < entry.getValue().size() - 1; i++) {
 
-                // var antiNodesCreated = comparePositions(entry.getValue());
-                var antiNodesCreated = comparePositionsRecursive(entry.getValue(), new ArrayList<>());
+                var antiNodesCreated = comparePositionsRecursive(entry.getValue(), new ArrayList<>(), matrix.length);
 
                 for (var antinode : antiNodesCreated) {
                     if (antinode.getCol() >= 0 && antinode.getRow() >= 0
-                            && antinode.getCol() < matrix.length && antinode.getRow() < matrix.length
-                            && matrix[antinode.getRow()][antinode.getCol()] != entry.getKey()) {
+                            && antinode.getCol() < matrix.length && antinode.getRow() < matrix.length) {
 
                         antinodes.add(antinode);
                         matrix[antinode.getRow()][antinode.getCol()] = '#';
@@ -69,13 +67,13 @@ public class Day8 {
 
         printMatrix(matrix);
 
-        // cuidado, pois estou substituindo outras letras por #
+        // part two
         var count = 0;
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[i].length; j++) {
                 var target = matrix[i][j];
 
-                if (target == '#') {
+                if (target == '#' || Character.isLetterOrDigit(target)) {
                     count++;
                 }
             }
@@ -85,7 +83,7 @@ public class Day8 {
     }
 
     // recursive
-    private static List<Position> comparePositionsRecursive(List<Position> positions, List<Position> antinodes) {
+    private static List<Position> comparePositionsRecursive(List<Position> positions, List<Position> antinodes, int size) {
         // CASO BASE
         if (positions.size() <= 1) {
             return positions;
@@ -96,49 +94,68 @@ public class Day8 {
             Position firstPosition = positions.getFirst();
             Position secondPosition = positions.get(i);
 
-            List<Position> createdAntinodes = createAntiNode(firstPosition, secondPosition);
+            List<Position> createdAntinodes = createAntiNode(firstPosition, secondPosition, size);
             antinodes.addAll(createdAntinodes);
         }
 
         positions.removeFirst(); // ja comparei, entao posso remover
-        comparePositionsRecursive(positions, antinodes);
+        comparePositionsRecursive(positions, antinodes, size);
 
         return antinodes;
     }
 
-    // iterative
-    private static List<Position> comparePositions(List<Position> positions) {
-        List<Position> antinodes = new ArrayList<>();
-
-        for (int i = 0; i < positions.size(); i++) {
-            for (int j = positions.size() - 1; j >= 0; j--) {
-                var createdNodes = createAntiNode(positions.get(i), positions.get(j));
-
-                for (var node : createdNodes) {
-                    antinodes.add(node);
-                }
-            }
-        }
-
-        return antinodes;
-    }
-
-    private static List<Position> createAntiNode(Position positionOne, Position positionTwo) {
+    private static List<Position> createAntiNode(Position positionOne, Position positionTwo, int size) {
         // (0,0) (2,2) -> (4,4)
         // downwards
-        var rowDif = positionTwo.getRow() - positionOne.getRow();
-        var columnDif = positionTwo.getCol() - positionOne.getCol();
-        var newRow = positionTwo.getRow() + rowDif;
-        var newColumn = positionTwo.getCol() + columnDif;
+        List<Position> createdDownwards = createDownwards(positionOne, positionTwo, size);
 
         // (2,5) (1,8) -> (0, 11)
         // upwards
-        var otherRowDif = positionOne.getRow() - positionTwo.getRow();
-        var otherColumnDif = positionOne.getCol() - positionTwo.getCol();
-        var otherNewRow = positionOne.getRow() + otherRowDif;
-        var otherNewColumn = positionOne.getCol() + otherColumnDif;
+        List<Position> createdUpwards = createUpwards(positionOne, positionTwo, size);
 
-        return List.of(new Position(newRow, newColumn), new Position(otherNewRow, otherNewColumn));
+        List<Position> positionsCreated = new ArrayList<>();
+        positionsCreated.addAll(createdDownwards);
+        positionsCreated.addAll(createdUpwards);
+
+        return positionsCreated;
+    }
+
+    private static List<Position> createUpwards(Position positionOne, Position positionTwo, int size) {
+        List<Position> positionsCreated = new ArrayList<>();
+
+        var rowDif = positionOne.getRow() - positionTwo.getRow();
+        var columnDif = positionOne.getCol() - positionTwo.getCol();
+
+        var newRow = positionOne.getRow() + rowDif;
+        var newColumn = positionOne.getCol() + columnDif;
+
+        while (newRow >= 0 && newRow < size && newColumn >= 0 && newColumn < size) {
+            positionsCreated.add(new Position(newRow, newColumn));
+
+            newRow = newRow + rowDif;
+            newColumn = newColumn + columnDif;
+        }
+
+        return positionsCreated;
+    }
+
+    private static List<Position> createDownwards(Position positionOne, Position positionTwo, int size) {
+        List<Position> positionsCreated = new ArrayList<>();
+
+        var rowDif = positionTwo.getRow() - positionOne.getRow();
+        var columnDif = positionTwo.getCol() - positionOne.getCol();
+
+        var newRow = positionTwo.getRow() + rowDif;
+        var newColumn = positionTwo.getCol() + columnDif;
+
+        while (newRow >= 0 && newRow < size && newColumn >= 0 && newColumn < size) {
+            positionsCreated.add(new Position(newRow, newColumn));
+
+            newRow = newRow + rowDif;
+            newColumn = newColumn + columnDif;
+        }
+
+        return positionsCreated;
     }
 
     private static class Position {
@@ -164,10 +181,25 @@ public class Day8 {
         }
     }
 
+    // iterative
+//    private static List<Position> comparePositions(List<Position> positions) {
+//        List<Position> antinodes = new ArrayList<>();
+//
+//        for (int i = 0; i < positions.size(); i++) {
+//            for (int j = positions.size() - 1; j >= 0; j--) {
+//                var createdNodes = createAntiNode(positions.get(i), positions.get(j));
+//
+//                antinodes.addAll(createdNodes);
+//            }
+//        }
+//
+//        return antinodes;
+//    }
+
     private static void printMatrix(char[][] matrix) {
-        for (int i = 0; i < matrix.length; i++) { // matrix.length = line quantity
-            for (int j = 0; j < matrix[i].length; j++) {
-                System.out.print(matrix[i][j] + " ");
+        for (char[] chars : matrix) { // matrix.length = line quantity
+            for (char aChar : chars) {
+                System.out.print(aChar + " ");
             }
             System.out.println();
         }
