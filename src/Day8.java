@@ -29,7 +29,7 @@ public class Day8 {
             matrix[i] = allLines.get(i);
         }
 
-        // finding digits and saving positions
+        // finding digits and saving correspondent positions
         Map<Character, List<Position>> positionsMap = new HashMap<>();
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[i].length; j++) {
@@ -38,48 +38,36 @@ public class Day8 {
                 if (Character.isLetterOrDigit(target)) {
                     var position = new Position(i, j);
 
-                    // only adds to map if digit is absent
                     positionsMap.putIfAbsent(target, new ArrayList<>());
                     positionsMap.get(target).add(position);
                 }
             }
         }
 
-        List<Position> antinodes = new ArrayList<>();
-
         for (var entry : positionsMap.entrySet()) {
-            System.out.println("Antenna frequency: " + entry.getKey() + " | Positions: " + entry.getValue());
+            System.out.println("Antenna frequency: " + entry.getKey() + " | Placed at: " + entry.getValue());
 
             for (int i = 0; i < entry.getValue().size() - 1; i++) {
-
                 var antiNodesCreated = comparePositionsRecursive(entry.getValue(), new ArrayList<>(), matrix.length);
 
-                for (var antinode : antiNodesCreated) {
-                    if (antinode.getCol() >= 0 && antinode.getRow() >= 0
-                            && antinode.getCol() < matrix.length && antinode.getRow() < matrix.length) {
-
-                        antinodes.add(antinode);
-                        matrix[antinode.getRow()][antinode.getCol()] = '#';
-                    }
+                for (var antiNode : antiNodesCreated) {
+                    matrix[antiNode.getRow()][antiNode.getCol()] = '#';
                 }
             }
         }
 
         printMatrix(matrix);
 
-        // part two
         var count = 0;
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix[i].length; j++) {
-                var target = matrix[i][j];
-
+        for (char[] chars : matrix) {
+            for (char target : chars) {
                 if (target == '#' || Character.isLetterOrDigit(target)) {
                     count++;
                 }
             }
         }
 
-        System.out.println(count);
+        System.out.println("Antinodes found in map: " + count);
     }
 
     // recursive
@@ -94,73 +82,39 @@ public class Day8 {
             Position firstPosition = positions.getFirst();
             Position secondPosition = positions.get(i);
 
-            List<Position> createdAntinodes = createAntiNode(firstPosition, secondPosition, size);
-            antinodes.addAll(createdAntinodes);
+            List<Position> createdAntinodesOneDirection = createAntiNodes(firstPosition, secondPosition, size);
+            List<Position> createdAntinodesOtherDirection = createAntiNodes(secondPosition, firstPosition, size);
+            antinodes.addAll(createdAntinodesOneDirection);
+            antinodes.addAll(createdAntinodesOtherDirection);
         }
 
-        positions.removeFirst(); // ja comparei, entao posso remover
+        positions.removeFirst(); // ja comparei com todos os outros, entao posso remover
         comparePositionsRecursive(positions, antinodes, size);
 
         return antinodes;
     }
 
-    private static List<Position> createAntiNode(Position positionOne, Position positionTwo, int size) {
-        // (0,0) (2,2) -> (4,4)
-        // downwards
-        List<Position> createdDownwards = createDownwards(positionOne, positionTwo, size);
-
-        // (2,5) (1,8) -> (0, 11)
-        // upwards
-        List<Position> createdUpwards = createUpwards(positionOne, positionTwo, size);
-
-        List<Position> positionsCreated = new ArrayList<>();
-        positionsCreated.addAll(createdDownwards);
-        positionsCreated.addAll(createdUpwards);
-
-        return positionsCreated;
-    }
-
-    private static List<Position> createUpwards(Position positionOne, Position positionTwo, int size) {
+    private static List<Position> createAntiNodes(Position positionOne, Position positionTwo, int size) {
         List<Position> positionsCreated = new ArrayList<>();
 
-        var rowDif = positionOne.getRow() - positionTwo.getRow();
-        var columnDif = positionOne.getCol() - positionTwo.getCol();
+        int rowDiff = positionTwo.getRow() - positionOne.getRow();
+        int colDiff = positionTwo.getCol() - positionOne.getCol();
 
-        var newRow = positionOne.getRow() + rowDif;
-        var newColumn = positionOne.getCol() + columnDif;
+        int newRow = positionOne.getRow() + rowDiff;
+        int newCol = positionOne.getCol() + colDiff;
 
-        while (newRow >= 0 && newRow < size && newColumn >= 0 && newColumn < size) {
-            positionsCreated.add(new Position(newRow, newColumn));
-
-            newRow = newRow + rowDif;
-            newColumn = newColumn + columnDif;
-        }
-
-        return positionsCreated;
-    }
-
-    private static List<Position> createDownwards(Position positionOne, Position positionTwo, int size) {
-        List<Position> positionsCreated = new ArrayList<>();
-
-        var rowDif = positionTwo.getRow() - positionOne.getRow();
-        var columnDif = positionTwo.getCol() - positionOne.getCol();
-
-        var newRow = positionTwo.getRow() + rowDif;
-        var newColumn = positionTwo.getCol() + columnDif;
-
-        while (newRow >= 0 && newRow < size && newColumn >= 0 && newColumn < size) {
-            positionsCreated.add(new Position(newRow, newColumn));
-
-            newRow = newRow + rowDif;
-            newColumn = newColumn + columnDif;
+        while (newRow >= 0 && newRow < size && newCol >= 0 && newCol < size) {
+            positionsCreated.add(new Position(newRow, newCol));
+            newRow = newRow + rowDiff;
+            newCol = newCol + colDiff;
         }
 
         return positionsCreated;
     }
 
     private static class Position {
-        private int row;
-        private int col;
+        private final int row;
+        private final int col;
 
         Position(int row, int col) {
             this.row = row;
