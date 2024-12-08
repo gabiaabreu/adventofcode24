@@ -29,9 +29,7 @@ public class Day8 {
             matrix[i] = allLines.get(i);
         }
 
-//        printMatrix(matrix);
-
-        // percorrendo a matrix, achando os caracteres e guardando suas posicoes
+        // finding digits and saving positions
         Map<Character, List<Position>> positionsMap = new HashMap<>();
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[i].length; j++) {
@@ -40,7 +38,7 @@ public class Day8 {
                 if (Character.isLetterOrDigit(target)) {
                     var position = new Position(i, j);
 
-                    // so adiciona uma nova key caso nao exista
+                    // only adds to map if digit is absent
                     positionsMap.putIfAbsent(target, new ArrayList<>());
                     positionsMap.get(target).add(position);
                 }
@@ -53,32 +51,25 @@ public class Day8 {
             System.out.println("Antenna frequency: " + entry.getKey() + " | Positions: " + entry.getValue());
 
             for (int i = 0; i < entry.getValue().size() - 1; i++) {
-                var firstPosition = entry.getValue().get(i);
-                var secondPosition = entry.getValue().get(i + 1);
-//                var thirdPosition = entry.getValue().get(i + 2);
-                var antiNodesCreated = createAntiNode(firstPosition, secondPosition);
-//                var moreAntinodes = createAntiNode(firstPosition, thirdPosition);
+
+                // var antiNodesCreated = comparePositions(entry.getValue());
+                var antiNodesCreated = comparePositionsRecursive(entry.getValue(), new ArrayList<>());
 
                 for (var antinode : antiNodesCreated) {
+                    if (antinode.getCol() >= 0 && antinode.getRow() >= 0
+                            && antinode.getCol() < matrix.length && antinode.getRow() < matrix.length
+                            && matrix[antinode.getRow()][antinode.getCol()] != entry.getKey()) {
 
-                    antinodes.add(antinode);
-                    matrix[antinode.getRow()][antinode.getCol()] = '#';
+                        antinodes.add(antinode);
+                        matrix[antinode.getRow()][antinode.getCol()] = '#';
+                    }
                 }
-
-//                for (var antinode : moreAntinodes) {
-//
-//                    if(antinode.getCol() >= 0 && antinode.getRow()>= 0 && antinode.getCol() < matrix.length && antinode.getRow() < matrix.length){
-//                        antinodes.add(antinode);
-//                        matrix[antinode.getRow()][antinode.getCol()] = '#';
-//
-//                    }
-//                }
             }
-
         }
 
         printMatrix(matrix);
 
+        // cuidado, pois estou substituindo outras letras por #
         var count = 0;
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[i].length; j++) {
@@ -93,22 +84,61 @@ public class Day8 {
         System.out.println(count);
     }
 
+    // recursive
+    private static List<Position> comparePositionsRecursive(List<Position> positions, List<Position> antinodes) {
+        // CASO BASE
+        if (positions.size() <= 1) {
+            return positions;
+        }
+
+        // CASO RECURSIVO
+        for (int i = 1; i < positions.size(); i++) {
+            Position firstPosition = positions.getFirst();
+            Position secondPosition = positions.get(i);
+
+            List<Position> createdAntinodes = createAntiNode(firstPosition, secondPosition);
+            antinodes.addAll(createdAntinodes);
+        }
+
+        positions.removeFirst(); // ja comparei, entao posso remover
+        comparePositionsRecursive(positions, antinodes);
+
+        return antinodes;
+    }
+
+    // iterative
+    private static List<Position> comparePositions(List<Position> positions) {
+        List<Position> antinodes = new ArrayList<>();
+
+        for (int i = 0; i < positions.size(); i++) {
+            for (int j = positions.size() - 1; j >= 0; j--) {
+                var createdNodes = createAntiNode(positions.get(i), positions.get(j));
+
+                for (var node : createdNodes) {
+                    antinodes.add(node);
+                }
+            }
+        }
+
+        return antinodes;
+    }
+
     private static List<Position> createAntiNode(Position positionOne, Position positionTwo) {
-        // esse ta certo, nao mexer
         // (0,0) (2,2) -> (4,4)
-        var column = positionTwo.getCol() - positionOne.getCol();
-        var row = positionTwo.getRow() - positionOne.getRow();
-        var newColumn = positionTwo.getCol() + column;
-        var newRow = positionTwo.getRow() + row;
+        // downwards
+        var rowDif = positionTwo.getRow() - positionOne.getRow();
+        var columnDif = positionTwo.getCol() - positionOne.getCol();
+        var newRow = positionTwo.getRow() + rowDif;
+        var newColumn = positionTwo.getCol() + columnDif;
 
-        // (1,8) (2,5) -> (0, 11)
-        var c = positionOne.getCol() - positionTwo.getCol();
-        var r = positionOne.getRow() - positionTwo.getRow();
-        var newnewColumn = positionOne.getCol() + c;
-        var newnewRow = positionOne.getRow() + r;
+        // (2,5) (1,8) -> (0, 11)
+        // upwards
+        var otherRowDif = positionOne.getRow() - positionTwo.getRow();
+        var otherColumnDif = positionOne.getCol() - positionTwo.getCol();
+        var otherNewRow = positionOne.getRow() + otherRowDif;
+        var otherNewColumn = positionOne.getCol() + otherColumnDif;
 
-        // (4,4) (2,5) -> (0,6)
-        return List.of(new Position(newRow, newColumn), new Position(newnewRow, newnewColumn));
+        return List.of(new Position(newRow, newColumn), new Position(otherNewRow, otherNewColumn));
     }
 
     private static class Position {
@@ -126,14 +156,6 @@ public class Day8 {
 
         public int getRow() {
             return row;
-        }
-
-        public void setRow(int row) {
-            this.row = row;
-        }
-
-        public void setCol(int col) {
-            this.col = col;
         }
 
         @Override
