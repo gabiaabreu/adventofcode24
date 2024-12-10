@@ -39,7 +39,7 @@ public class Day9 {
 
         dotMap.forEach(System.out::println);
         valuesAddedMap.forEach(System.out::println);
-        
+
         // part one
 //        List<String> newMap = new ArrayList<>(diskMap);
 //        int iterations = isEven(dotCount) ? dotCount : dotCount + 1;
@@ -51,14 +51,17 @@ public class Day9 {
 //        System.out.println("Checksum: " + sum);
 
         // part two
-        diskMap = doSomething(diskMap, valuesAddedMap, dotMap);
+        diskMap = doPartTwo(diskMap, valuesAddedMap, dotMap);
         printDiskMap(diskMap);
+
+        var sum = calculateChecksumPartTwo(diskMap);
+        System.out.println("Checksum: " + sum);
 
     }
 
-    private static List<String> doSomething(List<String> diskMap,
-                                            List<Value> valuesAdded,
-                                            List<Dot> dotMap) {
+    private static List<String> doPartTwo(List<String> diskMap,
+                                          List<Value> valuesAdded,
+                                          List<Dot> dotMap) {
 
         for (int j = valuesAdded.size() - 1; j >= 0; j--) {
 
@@ -94,13 +97,29 @@ public class Day9 {
                     firstDotThatFits++;
 
                     // substituir o valor no final por .
-                    diskMap.set((int)valueIndex, ".");
+                    diskMap.set((int) valueIndex, ".");
                     valueIndex++;
                 }
             }
         }
 
         return diskMap;
+    }
+
+    private static long calculateChecksumPartTwo(List<String> diskMap) {
+
+        long sum = 0;
+        for (int i = 0; i < diskMap.size(); i++) {
+            if (diskMap.get(i) != ".") {
+                long value = Long.parseLong(diskMap.get(i));
+
+                long partialSum = value * i;
+                sum = sum + partialSum;
+            }
+        }
+
+        return sum;
+        // 8509897721111 too high
     }
 
     private static class Dot {
