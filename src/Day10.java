@@ -24,25 +24,58 @@ public class Day10 {
             }
         }
 
-        int score = 0;
-        for (var x : zeroPositions) {
-            score = score + checkAdjacents(x.getRow(), x.getCol(), topographicMap, 0, new HashSet<>());
+        // part one
+        int partOneScore = 0;
+        for (var startPosition : zeroPositions) {
+            boolean[][] visited = new boolean[topographicMap.length][topographicMap[0].length];
+            int partialScore = exploreTrailPartOne(startPosition.getRow(),
+                    startPosition.getCol(), topographicMap, 0, visited);
+            partOneScore += partialScore;
         }
-        System.out.println(score);
+        System.out.println("Part one trailheads score sum: " + partOneScore);
+
+        // part two
+        int partTwoScore = 0;
+        for (var startPosition : zeroPositions) {
+            partTwoScore = partTwoScore + exploreTrailPartTwo(startPosition.getRow(),
+                    startPosition.getCol(), topographicMap, 0);
+        }
+        System.out.println("Part two trailheads score sum: " + partTwoScore);
     }
 
-    private static int checkAdjacents(int i, int j, int[][] matrix, int heightCount, Set<Position> visited) {
-        var currentPosition = new Position(i, j);
-
+    private static int exploreTrailPartOne(int i, int j, int[][] matrix, int currentHeight, boolean[][] visited) {
+        // base case: index out of bounds, position already visited or value not on current height
         if (i < 0 || i >= matrix.length || j < 0 || j >= matrix[0].length
-                || visited.contains(currentPosition) || matrix[i][j] != heightCount) {
+                || visited[i][j] || matrix[i][j] != currentHeight) {
             return 0;
         }
 
-        visited.add(currentPosition);
+        visited[i][j] = true;
 
-        if (heightCount == 9) {
-            visited.remove(currentPosition);
+        if (currentHeight == 9) {
+            return 1;
+        }
+
+        // recursive case
+        int score = 0;
+        for (int[] direction : DIRECTIONS) {
+            int newi = i + direction[0];
+            int newj = j + direction[1];
+            score = score + exploreTrailPartOne(newi, newj, matrix, currentHeight + 1, visited);
+        }
+
+        // mark position as not visited (backtracking)
+        visited[i][j] = false;
+        return score;
+    }
+
+    private static int exploreTrailPartTwo(int i, int j, int[][] matrix, int currentHeight) {
+        if (i < 0 || i >= matrix.length || j < 0 || j >= matrix[0].length
+                || matrix[i][j] != currentHeight) {
+            return 0;
+        }
+
+        if (currentHeight == 9) {
             return 1;
         }
 
@@ -50,10 +83,9 @@ public class Day10 {
         for (int[] direction : DIRECTIONS) {
             int newi = i + direction[0];
             int newj = j + direction[1];
-            score = score + checkAdjacents(newi, newj, matrix, heightCount + 1, visited);
+            score = score + exploreTrailPartTwo(newi, newj, matrix, currentHeight + 1);
         }
 
-        visited.remove(currentPosition);
         return score;
     }
 
