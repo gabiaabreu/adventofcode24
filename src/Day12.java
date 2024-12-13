@@ -1,10 +1,7 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Day12 {
     private static final int[][] DIRECTIONS = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
@@ -23,6 +20,8 @@ public class Day12 {
         Map<Character, List<Region>> plantMap = new HashMap<>();
         boolean[][] visited = new boolean[garden.length][garden[0].length];
 
+        var totalFenceCost = 0;
+        var totalFenceCostWithDiscount = 0;
         // entering matrix
         for (int i = 0; i < garden.length; i++) {
             for (int j = 0; j < garden[0].length; j++) {
@@ -31,36 +30,27 @@ public class Day12 {
                     Region region = new Region();
                     exploreGarden(i, j, garden, garden[i][j], visited, region);
 
-                    plantMap.putIfAbsent(garden[i][j], new ArrayList<>());
                     // adds found region to key (letter)
+                    plantMap.putIfAbsent(garden[i][j], new ArrayList<>());
                     plantMap.get(garden[i][j]).add(region);
+
+                    // calculate region fence cost
+                    var cost = getFenceCost(region, garden);
+                    totalFenceCost = totalFenceCost + cost;
+
+                    var discountCost = getFenceCostPartTwo(region);
+                    totalFenceCostWithDiscount = totalFenceCostWithDiscount + discountCost;
                 }
             }
         }
 
-        // printPlantRegions(plantMap);
-
-        var totalFenceCost = 0;
-        for (var entry : plantMap.entrySet()) {
-            var letter = entry.getKey();
-            int regionNumber = 1;
-
-            // calculates cost for each region of each letter
-            for (Region region : entry.getValue()) {
-                var cost = getFenceCost(region, garden);
-                totalFenceCost = totalFenceCost + cost;
-
-                System.out.println("Letter " + letter + " region " + regionNumber);
-                System.out.println("Fence cost: " + cost + "\n");
-                regionNumber++;
-            }
-        }
-
+        // printPlantRegions(plantMap, garden);
         System.out.println("Total fence cost: " + totalFenceCost);
+        System.out.println("Total fence cost with discount: " + totalFenceCostWithDiscount);
     }
 
-    private static void exploreGarden(int i, int j, char[][] matrix, char currentPlant, boolean[][] visited,
-                                      Region region) {
+    private static void exploreGarden(int i, int j, char[][] matrix, char currentPlant,
+                                      boolean[][] visited, Region region) {
         // base case - end recursion
         if (i < 0 || i >= matrix.length || j < 0 || j >= matrix[0].length
                 || visited[i][j] || matrix[i][j] != currentPlant) {
@@ -102,6 +92,70 @@ public class Day12 {
         return perimeter * area;
     }
 
+    private static int getFenceCostPartTwo(final Region region) {
+        int totalCorners = 0;
+        int area = region.getPositions().size();
+
+        for (final Position position : region.getPositions()) {
+            int corners = 0;
+            if (!hasLeftNeighbour(position, region) && !hasUpperNeighbour(position, region)
+                    || !hasUpperLeftNeighbour(position, region) && hasLeftNeighbour(position, region)
+                    && hasUpperNeighbour(position, region)) {
+                corners++;
+            }
+            if (!hasRightNeighbour(position, region) && !hasUpperNeighbour(position, region)
+                    || !hasUpperRightNeighbour(position, region) && hasRightNeighbour(position, region)
+                    && hasUpperNeighbour(position, region)) {
+                corners++;
+            }
+            if (!hasRightNeighbour(position, region) && !hasLowerNeighbour(position, region)
+                    || !hasLowerRightNeighbour(position, region) && hasRightNeighbour(position, region)
+                    && hasLowerNeighbour(position, region)) {
+                corners++;
+            }
+            if (!hasLeftNeighbour(position, region) && !hasLowerNeighbour(position, region)
+                    || !hasLowerLeftNeighbour(position, region) && hasLeftNeighbour(position, region)
+                    && hasLowerNeighbour(position, region)) {
+                corners++;
+            }
+            totalCorners += corners;
+        }
+
+        return totalCorners * area;
+    }
+
+    private static boolean hasLeftNeighbour(final Position p, final Region region) {
+        return region.getPositions().contains(new Position(p.getRow() - 1, p.getCol()));
+    }
+
+    private static boolean hasRightNeighbour(final Position p, final Region region) {
+        return region.getPositions().contains(new Position(p.getRow() + 1, p.getCol()));
+    }
+
+    private static boolean hasUpperNeighbour(final Position p, final Region region) {
+        return region.getPositions().contains(new Position(p.getRow(), p.getCol() - 1));
+    }
+
+    private static boolean hasLowerNeighbour(final Position p, final Region region) {
+        return region.getPositions().contains(new Position(p.getRow(), p.getCol() + 1));
+    }
+
+    private static boolean hasLowerLeftNeighbour(final Position p, final Region region) {
+        return region.getPositions().contains(new Position(p.getRow() - 1, p.getCol() + 1));
+    }
+
+    private static boolean hasUpperRightNeighbour(final Position p, final Region region) {
+        return region.getPositions().contains(new Position(p.getRow() + 1, p.getCol() - 1));
+    }
+
+    private static boolean hasUpperLeftNeighbour(final Position p, final Region region) {
+        return region.getPositions().contains(new Position(p.getRow() - 1, p.getCol() - 1));
+    }
+
+    private static boolean hasLowerRightNeighbour(final Position p, final Region region) {
+        return region.getPositions().contains(new Position(p.getRow() + 1, p.getCol() + 1));
+    }
+
     private static class Region {
         private List<Position> positions;
 
@@ -123,8 +177,8 @@ public class Day12 {
     }
 
     private static class Position {
-        private final int row;
-        private final int col;
+        private int row;
+        private int col;
 
         Position(int row, int col) {
             this.row = row;
@@ -139,18 +193,50 @@ public class Day12 {
             return row;
         }
 
+        public void setRow(int row) {
+            this.row = row;
+        }
+
+        public void setCol(int col) {
+            this.col = col;
+        }
+
         @Override
         public String toString() {
             return "(" + row + ", " + col + ")";
         }
+
+        @Override
+        public boolean equals(Object o) { // super important for .contains() to work
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Position position = (Position) o;
+            return row == position.row && col == position.col;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(row, col);
+        }
     }
 
-    private static void printPlantRegions(Map<Character, List<Region>> plantMap) {
-        for (Map.Entry<Character, List<Region>> entry : plantMap.entrySet()) {
-            System.out.println("Letra: " + entry.getKey());
+    private static void printPlantRegions(Map<Character, List<Region>> plantMap, char[][] garden) {
+        for (var entry : plantMap.entrySet()) {
+            var letter = entry.getKey();
+            System.out.println("Plant: " + letter);
+
             int regionNumber = 1;
             for (Region region : entry.getValue()) {
                 System.out.println("Região " + regionNumber + ":");
+
+                var cost = getFenceCost(region, garden);
+
+                var discountCost = getFenceCostPartTwo(region);
+
+                System.out.println("Letter " + letter + " region " + regionNumber);
+                System.out.println("Fence cost: " + cost);
+                System.out.println("Fence cost with discount: " + discountCost + "\n");
+
                 for (Position pos : region.getPositions()) {
                     System.out.println(pos);
                 }
