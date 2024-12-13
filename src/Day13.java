@@ -14,7 +14,7 @@ public class Day13 {
 
         var totalTokensSpent = 0;
         for (var machine : machineRules) {
-            MachineResult result = moveClaw(machine.getTargetX(), machine.getTargetY(),
+            MachineResult result = moveClawBFS(machine.getTargetX(), machine.getTargetY(),
                     machine.getaX(), machine.getaY(), machine.getbX(), machine.getbY());
 
             if(result.getTokensSpent() != -1) {
@@ -26,8 +26,8 @@ public class Day13 {
     }
 
     // BFS
-    private static MachineResult moveClaw(int targetX, int targetY, int aX, int aY, int bX, int bY) {
-        int maxPresses = 100;
+    private static MachineResult moveClawBFS(long targetX, long targetY, int aX, int aY, int bX, int bY) {
+        long maxPresses = 100;
 
         // Fila para explorar os estados
         Queue<State> queue = new LinkedList<>();
@@ -42,8 +42,8 @@ public class Day13 {
             var state = queue.poll();
             int aPresses = state.getButtonAPresses();
             int bPresses = state.getButtonBPresses();
-            int x = state.getxPosition();
-            int y = state.getyPosition();
+            var x = state.getxPosition();
+            var y = state.getyPosition();
             int tokens = state.getTokensSpent();
 
             if (x == targetX && y == targetY) {
@@ -52,8 +52,8 @@ public class Day13 {
 
             // Verifica as próximas possibilidades (pressionar A ou B)
             if (aPresses < maxPresses) {
-                int newX = x + aX;
-                int newY = y + aY;
+                var newX = x + aX;
+                var newY = y + aY;
                 int newTokens = tokens + 3;
                 String newState = newX + "," + newY;
 
@@ -64,8 +64,8 @@ public class Day13 {
             }
 
             if (bPresses < maxPresses) {
-                int newX = x + bX;
-                int newY = y + bY;
+                var newX = x + bX;
+                var newY = y + bY;
                 int newTokens = tokens + 1;
                 String newState = newX + "," + newY;
 
@@ -80,9 +80,8 @@ public class Day13 {
         return new MachineResult(-1, -1, -1);
     }
 
-    // DFS
-    // nao eh bom pra esse caso
-    private static void findOptimalSolution(int buttonAPresses, int buttonBPresses, int currentX, int currentY,
+    // DFS - nao eh bom pra esse caso
+    private static void moveClawDFS(int buttonAPresses, int buttonBPresses, int currentX, int currentY,
                                             int targetX, int targetY, int tokensSpent) {
         // base case
         if (buttonAPresses >= 100 || buttonBPresses >= 100
@@ -96,10 +95,10 @@ public class Day13 {
             return;
         }
 
-        findOptimalSolution(buttonAPresses + 1, buttonBPresses,
+        moveClawDFS(buttonAPresses + 1, buttonBPresses,
                 currentX + 94, currentY + 34, targetX, targetY,
                 tokensSpent + 3);
-        findOptimalSolution(buttonAPresses, buttonBPresses + 1,
+        moveClawDFS(buttonAPresses, buttonBPresses + 1,
                 currentX + 34, currentY + 67, targetX, targetY,
                 tokensSpent + 1);
     }
@@ -137,8 +136,10 @@ public class Day13 {
                     }
                     case "Prize" -> {
                         var values = ruleValue.trim().split(",");
-                        var xValue = Integer.parseInt(values[0].replace("X=", ""));
-                        var yValue = Integer.parseInt(values[1].trim().replace("Y=", ""));
+//                        var xValue = Long.parseLong(values[0].replace("X=", ""));
+//                        var yValue = Long.parseLong(values[1].trim().replace("Y=", ""));
+                        var xValue = 10000000000000L + Long.parseLong(values[0].replace("X=", ""));
+                        var yValue = 10000000000000L + Long.parseLong(values[1].trim().replace("Y=", ""));
 
                         rule.setTargetX(xValue);
                         rule.setTargetY(yValue);
@@ -155,11 +156,11 @@ public class Day13 {
     private static class State {
         int buttonAPresses;
         int buttonBPresses;
-        int xPosition;
-        int yPosition;
+        long xPosition;
+        long yPosition;
         int tokensSpent;
 
-        State(int buttonAPresses, int buttonBPresses, int xPosition, int yPosition, int tokensSpent) {
+        State(int buttonAPresses, int buttonBPresses, long xPosition, long yPosition, int tokensSpent) {
             this.buttonAPresses = buttonAPresses;
             this.buttonBPresses = buttonBPresses;
             this.xPosition = xPosition;
@@ -175,11 +176,11 @@ public class Day13 {
             return buttonBPresses;
         }
 
-        public int getxPosition() {
+        public long getxPosition() {
             return xPosition;
         }
 
-        public int getyPosition() {
+        public long getyPosition() {
             return yPosition;
         }
 
@@ -209,8 +210,8 @@ public class Day13 {
         int aY;
         int bX;
         int bY;
-        int targetX;
-        int targetY;
+        long targetX;
+        long targetY;
 
         public MachineRules() {
 
@@ -232,11 +233,11 @@ public class Day13 {
             return bY;
         }
 
-        public int getTargetX() {
+        public long getTargetX() {
             return targetX;
         }
 
-        public int getTargetY() {
+        public long getTargetY() {
             return targetY;
         }
 
@@ -256,11 +257,11 @@ public class Day13 {
             this.bY = bY;
         }
 
-        public void setTargetX(int targetX) {
+        public void setTargetX(long targetX) {
             this.targetX = targetX;
         }
 
-        public void setTargetY(int targetY) {
+        public void setTargetY(long targetY) {
             this.targetY = targetY;
         }
     }
