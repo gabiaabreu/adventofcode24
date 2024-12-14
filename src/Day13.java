@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.*;
 
 public class Day13 {
@@ -12,96 +13,128 @@ public class Day13 {
 
         var machineRules = getInputRules(reader);
 
-        var totalTokensSpent = 0;
+        BigInteger totalTokensSpentPartOne = BigInteger.ZERO;
+        BigInteger totalTokensSpentPartTwo = BigInteger.ZERO;
         for (var machine : machineRules) {
-            MachineResult result = moveClawBFS(machine.getTargetX(), machine.getTargetY(),
-                    machine.getaX(), machine.getaY(), machine.getbX(), machine.getbY());
+            // part one - BFS solution
+            MachineResult result = moveClawBFS(machine.getTargetX() - 10000000000000L,
+                    machine.getTargetY() - 10000000000000L, machine.getaX(),
+                    machine.getaY(), machine.getbX(), machine.getbY());
 
-            if(result.getTokensSpent() != -1) {
-                totalTokensSpent += result.getTokensSpent();
+            if (!result.getTokensSpent().equals(BigInteger.valueOf(-1))) {
+                totalTokensSpentPartOne = totalTokensSpentPartOne.add(result.getTokensSpent());
+            }
+
+            // part two - linear system solution
+            MachineResult resultPartTwo = solveSystem(BigInteger.valueOf(machine.getaX()),
+                    BigInteger.valueOf(machine.getaY()), BigInteger.valueOf(machine.getbX()),
+                    BigInteger.valueOf(machine.getbY()), BigInteger.valueOf(machine.getTargetX()),
+                    BigInteger.valueOf(machine.getTargetY()));
+
+            if (!resultPartTwo.getTokensSpent().equals(BigInteger.valueOf(-1))) {
+                totalTokensSpentPartTwo = totalTokensSpentPartTwo.add(resultPartTwo.getTokensSpent());
             }
         }
 
-        System.out.println(totalTokensSpent);
+        System.out.println(totalTokensSpentPartOne);
+        System.out.println(totalTokensSpentPartTwo);
     }
 
-    // BFS
-    private static MachineResult moveClawBFS(long targetX, long targetY, int aX, int aY, int bX, int bY) {
+    private static MachineResult solveSystem(BigInteger aX, BigInteger aY, BigInteger bX, BigInteger bY,
+                                            BigInteger prizeX, BigInteger prizeY) {
+        // calculating system determinant
+        BigInteger determinant = aX.multiply(bY).subtract(bX.multiply(aY));
+
+        // solving linear system
+        BigInteger aPresses = (prizeX.multiply(bY).subtract(prizeY.multiply(bX))).divide(determinant);
+        BigInteger bPresses = (aX.multiply(prizeY).subtract(aY.multiply(prizeX))).divide(determinant);
+
+        // comparing result with target positions
+        if (!(aPresses.multiply(aX).add(bPresses.multiply(bX)).equals(prizeX)
+                && aPresses.multiply(aY).add(bPresses.multiply(bY)).equals(prizeY))) {
+            return new MachineResult(BigInteger.valueOf(-1), BigInteger.valueOf(-1), BigInteger.valueOf(-1));
+        }
+
+        BigInteger tokens = aPresses.multiply(BigInteger.valueOf(3L)).add(bPresses);
+        return new MachineResult(aPresses, bPresses, tokens);
+    }
+
+    // BFS - Breadth-First Search - Busca em Largura
+    private static MachineResult moveClawBFS(long targetX, long targetY, long aX, long aY, long bX, long bY) {
         long maxPresses = 100;
 
-        // Fila para explorar os estados
-        Queue<State> queue = new LinkedList<>();
-        // Set para evitar revisitar estados já processados
-        Set<String> visited = new HashSet<>();
+        Queue<State> stateQueue = new LinkedList<>();
+        Set<Position> visitedPositions = new HashSet<>();
 
-        // Adiciona o estado inicial (0 pressões, 0 tokens gastos, posição inicial 0,0)
-        queue.offer(new State(0, 0, 0, 0, 0));  // [pressõesA, pressõesB, x, y, tokens]
-        visited.add("0,0");
+        // adds initial state
+        stateQueue.offer(new State(0, 0, 0, 0, 0));
+        visitedPositions.add(new Position(0, 0));
 
-        while (!queue.isEmpty()) {
-            var state = queue.poll();
+        while (!stateQueue.isEmpty()) {
+            var state = stateQueue.poll();
             int aPresses = state.getButtonAPresses();
             int bPresses = state.getButtonBPresses();
             var x = state.getxPosition();
             var y = state.getyPosition();
             int tokens = state.getTokensSpent();
 
+            // if current position = target position
             if (x == targetX && y == targetY) {
-                return new MachineResult(aPresses, bPresses, tokens);
+                return new MachineResult(BigInteger.valueOf(aPresses),
+                        BigInteger.valueOf(bPresses), BigInteger.valueOf(tokens));
             }
 
-            // Verifica as próximas possibilidades (pressionar A ou B)
+            // press A
             if (aPresses < maxPresses) {
                 var newX = x + aX;
                 var newY = y + aY;
                 int newTokens = tokens + 3;
-                String newState = newX + "," + newY;
 
-                if (!visited.contains(newState)) {
-                    visited.add(newState);
-                    queue.offer(new State(aPresses + 1, bPresses, newX, newY, newTokens));
+                if (!visitedPositions.contains(new Position(newX, newY))) {
+                    visitedPositions.add(new Position(newX, newY));
+                    stateQueue.offer(new State(aPresses + 1, bPresses, newX, newY, newTokens));
                 }
             }
 
+            // press B
             if (bPresses < maxPresses) {
                 var newX = x + bX;
                 var newY = y + bY;
                 int newTokens = tokens + 1;
-                String newState = newX + "," + newY;
 
-                if (!visited.contains(newState)) {
-                    visited.add(newState);
-                    queue.offer(new State(aPresses, bPresses + 1, newX, newY, newTokens));
+                if (!visitedPositions.contains(new Position(newX, newY))) {
+                    visitedPositions.add(new Position(newX, newY));
+                    stateQueue.offer(new State(aPresses, bPresses + 1, newX, newY, newTokens));
                 }
             }
         }
 
-        // Caso não consiga encontrar uma solução
-        return new MachineResult(-1, -1, -1);
+        // no solution found
+        return new MachineResult(BigInteger.valueOf(-1), BigInteger.valueOf(-1), BigInteger.valueOf(-1));
     }
 
-    // DFS - nao eh bom pra esse caso
-    private static void moveClawDFS(int buttonAPresses, int buttonBPresses, int currentX, int currentY,
-                                            int targetX, int targetY, int tokensSpent) {
-        // base case
-        if (buttonAPresses >= 100 || buttonBPresses >= 100
-                || currentX > targetX || currentY > targetY) {
-            System.out.println("x: " + currentX + ", y: " + currentY);
-            return;
-        }
-
-        // recursive case
-        if (currentX == targetX && currentY == targetY) {
-            return;
-        }
-
-        moveClawDFS(buttonAPresses + 1, buttonBPresses,
-                currentX + 94, currentY + 34, targetX, targetY,
-                tokensSpent + 3);
-        moveClawDFS(buttonAPresses, buttonBPresses + 1,
-                currentX + 34, currentY + 67, targetX, targetY,
-                tokensSpent + 1);
-    }
+    // DFS - not proper solution for this problem
+    //    private static void moveClawDFS(int buttonAPresses, int buttonBPresses, int currentX, int currentY,
+    //                                    int targetX, int targetY, int tokensSpent) {
+    //        // base case
+    //        if (buttonAPresses >= 100 || buttonBPresses >= 100
+    //                || currentX > targetX || currentY > targetY) {
+    //            System.out.println("x: " + currentX + ", y: " + currentY);
+    //            return;
+    //        }
+    //
+    //        // recursive case
+    //        if (currentX == targetX && currentY == targetY) {
+    //            return;
+    //        }
+    //
+    //        moveClawDFS(buttonAPresses + 1, buttonBPresses,
+    //                currentX + 94, currentY + 34, targetX, targetY,
+    //                tokensSpent + 3);
+    //        moveClawDFS(buttonAPresses, buttonBPresses + 1,
+    //                currentX + 34, currentY + 67, targetX, targetY,
+    //                tokensSpent + 1);
+    //    }
 
     private static List<MachineRules> getInputRules(BufferedReader reader) throws IOException {
         List<MachineRules> machineRules = new ArrayList<>();
@@ -136,8 +169,6 @@ public class Day13 {
                     }
                     case "Prize" -> {
                         var values = ruleValue.trim().split(",");
-//                        var xValue = Long.parseLong(values[0].replace("X=", ""));
-//                        var yValue = Long.parseLong(values[1].trim().replace("Y=", ""));
                         var xValue = 10000000000000L + Long.parseLong(values[0].replace("X=", ""));
                         var yValue = 10000000000000L + Long.parseLong(values[1].trim().replace("Y=", ""));
 
@@ -190,46 +221,45 @@ public class Day13 {
     }
 
     private static class MachineResult {
-        int buttonAPresses;
-        int buttonBPresses;
-        int tokensSpent;
+        BigInteger buttonAPresses;
+        BigInteger buttonBPresses;
+        BigInteger tokensSpent;
 
-        MachineResult(int buttonAPresses, int buttonBPresses, int tokensSpent) {
+        MachineResult(BigInteger buttonAPresses, BigInteger buttonBPresses, BigInteger tokensSpent) {
             this.buttonAPresses = buttonAPresses;
             this.buttonBPresses = buttonBPresses;
             this.tokensSpent = tokensSpent;
         }
 
-        public int getTokensSpent() {
+        public BigInteger getTokensSpent() {
             return tokensSpent;
         }
     }
 
     private static class MachineRules {
-        int aX;
-        int aY;
-        int bX;
-        int bY;
+        long aX;
+        long aY;
+        long bX;
+        long bY;
         long targetX;
         long targetY;
 
         public MachineRules() {
-
         }
 
-        public int getaX() {
+        public long getaX() {
             return aX;
         }
 
-        public int getaY() {
+        public long getaY() {
             return aY;
         }
 
-        public int getbX() {
+        public long getbX() {
             return bX;
         }
 
-        public int getbY() {
+        public long getbY() {
             return bY;
         }
 
@@ -241,19 +271,19 @@ public class Day13 {
             return targetY;
         }
 
-        public void setaX(int aX) {
+        public void setaX(long aX) {
             this.aX = aX;
         }
 
-        public void setaY(int aY) {
+        public void setaY(long aY) {
             this.aY = aY;
         }
 
-        public void setbX(int bX) {
+        public void setbX(long bX) {
             this.bX = bX;
         }
 
-        public void setbY(int bY) {
+        public void setbY(long bY) {
             this.bY = bY;
         }
 
@@ -263,6 +293,34 @@ public class Day13 {
 
         public void setTargetY(long targetY) {
             this.targetY = targetY;
+        }
+    }
+
+    private static class Position {
+        private final long row;
+        private final long col;
+
+        Position(long row, long col) {
+            this.row = row;
+            this.col = col;
+        }
+
+        @Override
+        public String toString() {
+            return "(" + row + ", " + col + ")";
+        }
+
+        @Override
+        public boolean equals(Object o) { // super important for .contains() to work
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Position position = (Position) o;
+            return row == position.row && col == position.col;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(row, col);
         }
     }
 
