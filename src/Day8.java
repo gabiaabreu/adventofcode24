@@ -112,29 +112,6 @@ public class Day8 {
         return positionsCreated;
     }
 
-    private static class Position {
-        private final int row;
-        private final int col;
-
-        Position(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        public int getCol() {
-            return col;
-        }
-
-        public int getRow() {
-            return row;
-        }
-
-        @Override
-        public String toString() {
-            return "(" + row + ", " + col + ")";
-        }
-    }
-
     // iterative
 //    private static List<Position> comparePositions(List<Position> positions) {
 //        List<Position> antinodes = new ArrayList<>();

@@ -89,29 +89,6 @@ public class Day10 {
         return score;
     }
 
-    private static class Position {
-        private final int row;
-        private final int col;
-
-        Position(int row, int col) {
-            this.row = row;
-            this.col = col;
-        }
-
-        public int getCol() {
-            return col;
-        }
-
-        public int getRow() {
-            return row;
-        }
-
-        @Override
-        public String toString() {
-            return "(" + row + ", " + col + ")";
-        }
-    }
-
     private static void printMatrix(int[][] matrix) {
         for (int[] values : matrix) { // matrix.length = line quantity
             for (int value : values) {
