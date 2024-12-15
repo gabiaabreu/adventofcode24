@@ -16,31 +16,68 @@ public class Day14 {
         BufferedReader reader = new BufferedReader(new FileReader(file));
 
         List<Robot> robots = getInput(reader);
+        List<Robot> robotsPtTwo = robots.stream()
+                .map(robot -> new Robot(robot.getX(), robot.getY(), robot.getWalkX(), robot.getWalkY()))
+                .toList();
 
-        char[][] bathroomTiles = new char[TALL][WIDE];
-        for (int i = 0; i < TALL; i++) {
-            Arrays.fill(bathroomTiles[i], '.');
-        }
-
+        // part one
         int[][] robotCount = new int[TALL][WIDE];
         for (var robot : robots) {
-            // part one
             passSeconds(robotCount, robot, 100);
         }
+
+        var bathroomTiles = getBathroomTiles(robotCount, true);
+
+        printMatrix(bathroomTiles);
+        var safetyFactor = getSafetyFactor(robotCount);
+        System.out.println("Bathroom safety factor: " + safetyFactor);
+
+        // part two
+        int[][] robotCountPtTwo = new int[TALL][WIDE];
+        for (int i = 0; i < 100; i++) {
+            passOneSecond(robotsPtTwo, robotCountPtTwo);
+        }
+
+        var bathroomTilesPtTwo = getBathroomTiles(robotCountPtTwo, false);
+        printMatrix(bathroomTilesPtTwo);
+    }
+
+    private static char[][] getBathroomTiles(int[][] robotCount, boolean numeric) {
+        char[][] bathroomTiles = new char[TALL][WIDE];
 
         for (int i = 0; i < TALL; i++) {
             for (int j = 0; j < WIDE; j++) {
                 if (robotCount[i][j] > 0) {
-                    bathroomTiles[i][j] = (char) (robotCount[i][j] + '0');
+                    if(numeric) {
+                        bathroomTiles[i][j] = (char) (robotCount[i][j] + '0');
+                    } else {
+                        bathroomTiles[i][j] = '█';
+                    }
                 } else {
                     bathroomTiles[i][j] = '.';
                 }
             }
         }
 
-        printMatrix(bathroomTiles);
-        var safetyFactor = getSafetyFactor(robotCount);
-        System.out.println("Bathroom safety factor: " + safetyFactor);
+        return bathroomTiles;
+    }
+
+    private static void passOneSecond(List<Robot> robots, int[][] robotCount) {
+        for (int i = 0; i < TALL; i++) {
+            Arrays.fill(robotCount[i], 0);
+        }
+
+        for (var robot : robots) {
+            var currentX = robot.getX();
+            var currentY = robot.getY();
+            int newX = (currentX + robot.getWalkX() + TALL) % TALL;
+            int newY = (currentY + robot.getWalkY() + WIDE) % WIDE;
+
+            robot.setX(newX);
+            robot.setY(newY);
+
+            robotCount[newX][newY]++;
+        }
     }
 
     private static void passSeconds(int[][] robotCount, Robot robot, int seconds) {
@@ -190,7 +227,7 @@ public class Day14 {
             }
             System.out.println();
         }
-        System.out.println("-----------------------");
+        System.out.println();
     }
 
     private static void printMatrix(char[][] matrix) {
@@ -200,6 +237,6 @@ public class Day14 {
             }
             System.out.println();
         }
-        System.out.println("-----------------------");
+        System.out.println();
     }
 }
