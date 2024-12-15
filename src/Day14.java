@@ -34,12 +34,42 @@ public class Day14 {
 
         // part two
         int[][] robotCountPtTwo = new int[TALL][WIDE];
-        for (int i = 0; i < 100; i++) {
+        char[][] bathroomTilesPtTwo = new char[TALL][WIDE];
+        for (int i = 0; i < 10000; i++) {
             passOneSecond(robotsPtTwo, robotCountPtTwo);
+
+            bathroomTilesPtTwo = getBathroomTiles(robotCountPtTwo, false);
+
+            if (containsTopOfTree(bathroomTilesPtTwo)) {
+                printMatrix(bathroomTilesPtTwo);
+                System.out.println("Seconds elapsed: " + i);
+            }
+        }
+    }
+
+    private static boolean containsTopOfTree(char[][] bathroomTiles) {
+        // checks for pattern:
+        // ..█..
+        // .███.
+        // █████
+
+        for (int i = 0; i < TALL - 2; i++) {
+            for (int j = 1; j < WIDE - 3; j++) {
+                if (bathroomTiles[i][j + 2] == '█' &&
+                        bathroomTiles[i + 1][j + 1] == '█' &&
+                        bathroomTiles[i + 1][j + 2] == '█' &&
+                        bathroomTiles[i + 1][j + 3] == '█' &&
+                        bathroomTiles[i + 2][j] == '█' &&
+                        bathroomTiles[i + 2][j + 1] == '█' &&
+                        bathroomTiles[i + 2][j + 2] == '█' &&
+                        bathroomTiles[i + 2][j + 3] == '█' &&
+                        bathroomTiles[i + 2][j + 4] == '█') {
+                    return true;
+                }
+            }
         }
 
-        var bathroomTilesPtTwo = getBathroomTiles(robotCountPtTwo, false);
-        printMatrix(bathroomTilesPtTwo);
+        return false;
     }
 
     private static char[][] getBathroomTiles(int[][] robotCount, boolean numeric) {
@@ -48,7 +78,7 @@ public class Day14 {
         for (int i = 0; i < TALL; i++) {
             for (int j = 0; j < WIDE; j++) {
                 if (robotCount[i][j] > 0) {
-                    if(numeric) {
+                    if (numeric) {
                         bathroomTiles[i][j] = (char) (robotCount[i][j] + '0');
                     } else {
                         bathroomTiles[i][j] = '█';
@@ -100,12 +130,6 @@ public class Day14 {
     private static int getSafetyFactor(int[][] robotCount) {
         var middleRow = robotCount.length / 2;
         var middleCol = robotCount[0].length / 2;
-
-        // List<Robot> robots
-//        final long q1 = robots.stream().filter(r -> r.getX() < middleX && r.getY() < middleY).count();
-//        final long q2 = robots.stream().filter(r -> r.getX() > middleX && r.getY() < middleY).count();
-//        final long q3 = robots.stream().filter(r -> r.getX() < middleX && r.getY() > middleY).count();
-//        final long q4 = robots.stream().filter(r -> r.getX() > middleX && r.getY() > middleY).count();
 
         // 1 3
         // 2 4
