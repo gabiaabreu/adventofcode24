@@ -35,17 +35,15 @@ public class Day15 {
             }
         }
 
-        printMatrix(warehouse);
         var count = 1;
         for (String direction : directions) {
-            System.out.println("Round " + count + ", direction: " + direction);
+            // System.out.println("Round " + count + ", direction: " + direction);
             robotPosition = move(direction, warehouse, robotPosition);
-//            printMatrix(warehouse);
 
             count++;
         }
 
-        // get all boxes positions
+        // get GPS result
         var gpsSum = 0;
         for (int i = 0; i < warehouse.length; i++) {
             for (int j = 0; j < warehouse[0].length; j++) {
@@ -53,13 +51,12 @@ public class Day15 {
                     var gps = (100 * i) + j;
 
                     gpsSum = gpsSum + gps;
-                    System.out.println("gps: 100 * " + i + " + " + j + " = " + gps);
                 }
             }
         }
 
+        printMatrix(warehouse);
         System.out.println(gpsSum);
-        // 1482507 too low
     }
 
     private static Position move(String direction, char[][] warehouse, Position currentPosition) {
@@ -113,12 +110,10 @@ public class Day15 {
         }
 
         if (!boxPositions.isEmpty()) {
-            for (var boxPosition : boxPositions) {
+            for (int m = boxPositions.size() - 1; m >= 0; m--) {
+                var boxPosition = boxPositions.get(m);
                 warehouse[i][boxPosition + 1] = 'O';
-
-                if (boxPosition == '.') {
-                    warehouse[i][boxPosition] = '.';
-                }
+                warehouse[i][boxPosition] = '.';
             }
         }
         warehouse[i][j + 1] = '@';
@@ -142,7 +137,7 @@ public class Day15 {
         var noSpacesToMove = true;
         for (int k = j; k >= 0; k--) {
             if (warehouse[i][k] == 'O') {
-                if (!boxPositions.isEmpty() && boxPositions.get(0) - k > 1) {
+                if (!boxPositions.isEmpty() && boxPositions.getLast() - k > 1) {
                     break;
                 } else {
                     boxPositions.add(k);
@@ -162,12 +157,10 @@ public class Day15 {
         }
 
         if (!boxPositions.isEmpty()) {
-            for (var boxPosition : boxPositions) {
+            for (int m = boxPositions.size() - 1; m >= 0; m--) {
+                var boxPosition = boxPositions.get(m);
                 warehouse[i][boxPosition - 1] = 'O';
-
-                if (boxPosition == '.') {
-                    warehouse[i][boxPosition] = '.';
-                }
+                warehouse[i][boxPosition] = '.';
             }
         }
         warehouse[i][j - 1] = '@';
@@ -191,7 +184,7 @@ public class Day15 {
         var noSpacesToMove = true;
         for (int k = i; k >= 0; k--) {
             if (warehouse[k][j] == 'O') {
-                if (!boxPositions.isEmpty() && boxPositions.get(0) - k > 1) {
+                if (!boxPositions.isEmpty() && boxPositions.getLast() - k > 1) {
                     break;
                 } else {
                     boxPositions.add(k);
@@ -211,12 +204,10 @@ public class Day15 {
         }
 
         if (!boxPositions.isEmpty()) {
-            for (var boxPosition : boxPositions) {
+            for (int m = boxPositions.size() - 1; m >= 0; m--) {
+                var boxPosition = boxPositions.get(m);
                 warehouse[boxPosition - 1][j] = 'O';
-
-                if (boxPosition == '.') {
-                    warehouse[boxPosition][j] = '.';
-                }
+                warehouse[boxPosition][j] = '.';
             }
         }
         warehouse[i - 1][j] = '@';
@@ -260,12 +251,10 @@ public class Day15 {
         }
 
         if (!boxPositions.isEmpty()) {
-            for (var boxPosition : boxPositions) {
+            for (int m = boxPositions.size() - 1; m >= 0; m--) {
+                var boxPosition = boxPositions.get(m);
                 warehouse[boxPosition + 1][j] = 'O';
-
-                if (boxPosition == '.') {
-                    warehouse[boxPosition][j] = '.';
-                }
+                warehouse[boxPosition][j] = '.';
             }
         }
         warehouse[i + 1][j] = '@';
