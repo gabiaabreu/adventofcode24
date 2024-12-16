@@ -29,20 +29,37 @@ public class Day15 {
         for (int i = 0; i < warehouse.length; i++) {
             for (int j = 0; j < warehouse[0].length; j++) {
                 if (warehouse[i][j] == '@') {
+                    // get robot initial position
                     robotPosition = new Position(i, j);
                 }
             }
         }
 
+        printMatrix(warehouse);
         var count = 1;
         for (String direction : directions) {
-            System.out.println("Rodada " + count + ", direction: " + direction);
+            System.out.println("Round " + count + ", direction: " + direction);
             robotPosition = move(direction, warehouse, robotPosition);
-            printMatrix(warehouse); // Exibe o estado atualizado do armazém após cada movimento
+//            printMatrix(warehouse);
 
             count++;
         }
 
+        // get all boxes positions
+        var gpsSum = 0;
+        for (int i = 0; i < warehouse.length; i++) {
+            for (int j = 0; j < warehouse[0].length; j++) {
+                if (warehouse[i][j] == 'O') {
+                    var gps = (100 * i) + j;
+
+                    gpsSum = gpsSum + gps;
+                    System.out.println("gps: 100 * " + i + " + " + j + " = " + gps);
+                }
+            }
+        }
+
+        System.out.println(gpsSum);
+        // 1482507 too low
     }
 
     private static Position move(String direction, char[][] warehouse, Position currentPosition) {
@@ -64,15 +81,19 @@ public class Day15 {
         var i = currentPosition.getRow();
         var j = currentPosition.getCol();
 
+        if (warehouse[i][j + 1] == '.') {
+            warehouse[i][j + 1] = '@';
+            warehouse[i][j] = '.';
+            return new Position(i, j + 1);
+        }
+
         List<Integer> boxPositions = new ArrayList<>();
 
         // moving right, so walking through line >>>
-        var wallPosition = -1;
         var noSpacesToMove = true;
         for (int k = j; k < warehouse[0].length; k++) {
             if (warehouse[i][k] == 'O') {
                 if (!boxPositions.isEmpty() && k - boxPositions.getLast() > 1) {
-                    wallPosition = k;
                     break;
                 } else {
                     boxPositions.add(k);
@@ -80,7 +101,6 @@ public class Day15 {
             }
             if (warehouse[i][k] == '#') {
                 // found wall
-                wallPosition = k;
                 break;
             }
             if (warehouse[i][k] == '.') {
@@ -92,46 +112,37 @@ public class Day15 {
             return new Position(i, j);
         }
 
-        if (boxPositions.size() == 1 && (boxPositions.getFirst() == wallPosition - 1)) {
-            warehouse[i][j] = '.';
-            warehouse[i][j + 1] = '@';
-            return new Position(i, j + 1);
-        }
-
         if (!boxPositions.isEmpty()) {
-            var newRobotCol = wallPosition - boxPositions.size() - 1;
-            warehouse[i][newRobotCol] = '@';
-            warehouse[i][j] = '.';
+            for (var boxPosition : boxPositions) {
+                warehouse[i][boxPosition + 1] = 'O';
 
-            for (var p = 0; p < boxPositions.size(); p++) {
-                warehouse[i][wallPosition - p - 1] = 'O';
-
-                if (boxPositions.get(p) < newRobotCol) {
-                    warehouse[i][boxPositions.get(p)] = '.';
+                if (boxPosition == '.') {
+                    warehouse[i][boxPosition] = '.';
                 }
             }
-
-            return new Position(i, newRobotCol);
-        } else {
-            warehouse[i][j] = '.';
-            warehouse[i][j + 1] = '@';
-            return new Position(i, j + 1);
         }
+        warehouse[i][j + 1] = '@';
+        warehouse[i][j] = '.';
+        return new Position(i, j + 1);
     }
 
     private static Position moveLeft(char[][] warehouse, Position currentPosition) {
         var i = currentPosition.getRow();
         var j = currentPosition.getCol();
 
+        if (warehouse[i][j - 1] == '.') {
+            warehouse[i][j - 1] = '@';
+            warehouse[i][j] = '.';
+            return new Position(i, j - 1);
+        }
+
         List<Integer> boxPositions = new ArrayList<>();
 
         // moving left, so walking through line <<<
-        var wallPosition = -1;
         var noSpacesToMove = true;
         for (int k = j; k >= 0; k--) {
             if (warehouse[i][k] == 'O') {
-                if (!boxPositions.isEmpty() && boxPositions.get(boxPositions.size() - 1) - k > 1) {
-                    wallPosition = k;
+                if (!boxPositions.isEmpty() && boxPositions.get(0) - k > 1) {
                     break;
                 } else {
                     boxPositions.add(k);
@@ -139,7 +150,6 @@ public class Day15 {
             }
             if (warehouse[i][k] == '#') {
                 // found wall
-                wallPosition = k;
                 break;
             }
             if (warehouse[i][k] == '.') {
@@ -151,46 +161,37 @@ public class Day15 {
             return new Position(i, j);
         }
 
-        if (boxPositions.size() == 1 && (boxPositions.getFirst() == wallPosition + 1)) {
-            warehouse[i][j] = '.';
-            warehouse[i][j - 1] = '@';
-            return new Position(i, j - 1);
-        }
-
         if (!boxPositions.isEmpty()) {
-            var newRobotCol = wallPosition + boxPositions.size() + 1;
-            warehouse[i][newRobotCol] = '@';
-            warehouse[i][j] = '.';
+            for (var boxPosition : boxPositions) {
+                warehouse[i][boxPosition - 1] = 'O';
 
-            for (var p = 0; p < boxPositions.size(); p++) {
-                warehouse[i][wallPosition + p + 1] = 'O';
-
-                if (boxPositions.get(p) > newRobotCol) {
-                    warehouse[i][boxPositions.get(p)] = '.';
+                if (boxPosition == '.') {
+                    warehouse[i][boxPosition] = '.';
                 }
             }
-
-            return new Position(i, newRobotCol);
-        } else {
-            warehouse[i][j] = '.';
-            warehouse[i][j - 1] = '@';
-            return new Position(i, j - 1);
         }
+        warehouse[i][j - 1] = '@';
+        warehouse[i][j] = '.';
+        return new Position(i, j - 1);
     }
 
     private static Position moveUp(char[][] warehouse, Position currentPosition) {
         var i = currentPosition.getRow();
         var j = currentPosition.getCol();
 
+        if (warehouse[i - 1][j] == '.') {
+            warehouse[i - 1][j] = '@';
+            warehouse[i][j] = '.';
+            return new Position(i - 1, j);
+        }
+
         List<Integer> boxPositions = new ArrayList<>();
 
-        // moving up, so walking through column ^^^
-        var wallPosition = -1;
+        // moving up, so walking through column ^
         var noSpacesToMove = true;
         for (int k = i; k >= 0; k--) {
             if (warehouse[k][j] == 'O') {
-                if (!boxPositions.isEmpty() && boxPositions.get(boxPositions.size() - 1) - k > 1) {
-                    wallPosition = k;
+                if (!boxPositions.isEmpty() && boxPositions.get(0) - k > 1) {
                     break;
                 } else {
                     boxPositions.add(k);
@@ -198,7 +199,6 @@ public class Day15 {
             }
             if (warehouse[k][j] == '#') {
                 // found wall
-                wallPosition = k;
                 break;
             }
             if (warehouse[k][j] == '.') {
@@ -210,46 +210,37 @@ public class Day15 {
             return new Position(i, j);
         }
 
-        if (boxPositions.size() == 1 && (boxPositions.getFirst() - wallPosition == 1)) {
-            warehouse[i][j] = '.';
-            warehouse[i - 1][j] = '@';
-            return new Position(i - 1, j);
-        }
-
         if (!boxPositions.isEmpty()) {
-            var newRobotRow = wallPosition + boxPositions.size() + 1;
-            warehouse[newRobotRow][j] = '@';
-            warehouse[i][j] = '.';
+            for (var boxPosition : boxPositions) {
+                warehouse[boxPosition - 1][j] = 'O';
 
-            for (var p = 0; p < boxPositions.size(); p++) {
-                warehouse[wallPosition + p + 1][j] = 'O';
-
-                if (boxPositions.get(p) > newRobotRow) {
-                    warehouse[boxPositions.get(p)][j] = '.';
+                if (boxPosition == '.') {
+                    warehouse[boxPosition][j] = '.';
                 }
             }
-
-            return new Position(newRobotRow, j);
-        } else {
-            warehouse[i][j] = '.';
-            warehouse[i - 1][j] = '@';
-            return new Position(i - 1, j);
         }
+        warehouse[i - 1][j] = '@';
+        warehouse[i][j] = '.';
+        return new Position(i - 1, j);
     }
 
     private static Position moveDown(char[][] warehouse, Position currentPosition) {
         var i = currentPosition.getRow();
         var j = currentPosition.getCol();
 
+        if (warehouse[i + 1][j] == '.') {
+            warehouse[i + 1][j] = '@';
+            warehouse[i][j] = '.';
+            return new Position(i + 1, j);
+        }
+
         List<Integer> boxPositions = new ArrayList<>();
 
-        // moving down, so walking through column vvv
-        var wallPosition = -1;
+        // moving down, so walking through column v
         var noSpacesToMove = true;
         for (int k = i; k < warehouse.length; k++) {
             if (warehouse[k][j] == 'O') {
-                if (!boxPositions.isEmpty() && k - boxPositions.get(boxPositions.size() - 1) > 1) {
-                    wallPosition = k;
+                if (!boxPositions.isEmpty() && k - boxPositions.getLast() > 1) {
                     break;
                 } else {
                     boxPositions.add(k);
@@ -257,7 +248,6 @@ public class Day15 {
             }
             if (warehouse[k][j] == '#') {
                 // found wall
-                wallPosition = k;
                 break;
             }
             if (warehouse[k][j] == '.') {
@@ -269,31 +259,18 @@ public class Day15 {
             return new Position(i, j);
         }
 
-        if (boxPositions.size() == 1 && (wallPosition - boxPositions.getFirst() == 1)) {
-            warehouse[i][j] = '.';
-            warehouse[i + 1][j] = '@';
-            return new Position(i + 1, j);
-        }
-
         if (!boxPositions.isEmpty()) {
-            var newRobotRow = wallPosition - boxPositions.size() - 1;
-            warehouse[newRobotRow][j] = '@';
-            warehouse[i][j] = '.';
+            for (var boxPosition : boxPositions) {
+                warehouse[boxPosition + 1][j] = 'O';
 
-            for (var p = 0; p < boxPositions.size(); p++) {
-                warehouse[wallPosition - p - 1][j] = 'O';
-
-                if (boxPositions.get(p) < newRobotRow) {
-                    warehouse[boxPositions.get(p)][j] = '.';
+                if (boxPosition == '.') {
+                    warehouse[boxPosition][j] = '.';
                 }
             }
-
-            return new Position(newRobotRow, j);
-        } else {
-            warehouse[i][j] = '.';
-            warehouse[i + 1][j] = '@';
-            return new Position(i + 1, j);
         }
+        warehouse[i + 1][j] = '@';
+        warehouse[i][j] = '.';
+        return new Position(i + 1, j);
     }
 
 
