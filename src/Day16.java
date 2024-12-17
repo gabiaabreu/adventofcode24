@@ -2,7 +2,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class Day16 {
 
@@ -33,18 +33,34 @@ public class Day16 {
             }
         }
 
-        System.out.println("Lowest reindeer walk score: " + findLowestScore(maze, startPosition, endPosition));
+        var lowestScore = findLowestScore(maze, startPosition, endPosition).cost;
+        var bestPlacesToSit = findLowestScore(maze, startPosition, endPosition).positions;
+        System.out.println("Lowest reindeer walk score: " + lowestScore);
+        System.out.println("Best places to sit: " + bestPlacesToSit.size());
+
+        for (int i = 0; i < maze.length; i++) {
+            for (int j = 0; j < maze[0].length; j++) {
+                if(bestPlacesToSit.contains(new Position(i, j))) {
+                    maze[i][j] = 'O';
+                }
+            }
+        }
+        printMatrix(maze);
+
     }
 
     // Dijkstra's algorithm
-    public static int findLowestScore(char[][] maze, Position start, Position end) {
+    private static State findLowestScore(char[][] maze, Position start, Position end) {
         // queue to store states
         // priority: lowest accumulated cost
         PriorityQueue<State> stateQueue = new PriorityQueue<>();
         boolean[][][] visited = new boolean[maze.length][maze[0].length][4];
 
+        List<Position> initialPositions = new ArrayList<>();
+        initialPositions.add(start);
+
         // adds initial state (S position, east direction (1), 0 cost)
-        stateQueue.add(new State(start.getRow(), start.getCol(), 1, 0));
+        stateQueue.add(new State(start.getRow(), start.getCol(), 1, 0, initialPositions));
 
         while (!stateQueue.isEmpty()) {
             // removes state with the lowest cost from queue
@@ -60,7 +76,8 @@ public class Day16 {
 
             // checks if it's end position
             if (currentState.x == end.getRow() && currentState.y == end.getCol()) {
-                return currentState.cost;
+                currentState.positions.add(end);
+                return currentState;
             }
 
             // possible movements:
@@ -70,34 +87,42 @@ public class Day16 {
             if (nx >= 0 && ny >= 0 && nx < maze.length && ny < maze[0].length // in bounds
                     && maze[nx][ny] != '#') { // if next tile isn't a wall
                 // adds to queue with +1 cost
-                stateQueue.add(new State(nx, ny, currentState.direction, currentState.cost + 1));
+                List<Position> newPositions = new ArrayList<>(currentState.positions);
+                newPositions.add(new Position(nx, ny));
+                stateQueue.add(new State(nx, ny, currentState.direction, currentState.cost + 1, newPositions));
             }
 
             // rotate to the left (cost + 1000)
             int leftDirection = (currentState.direction + 3) % 4; // directions: 0 north, 1 east, 2 south, 3 west
-            stateQueue.add(new State(currentState.x, currentState.y, leftDirection, currentState.cost + 1000));
+            List<Position> leftPositions = new ArrayList<>(currentState.positions);
+            leftPositions.add(new Position(currentState.x, currentState.y));
+            stateQueue.add(new State(currentState.x, currentState.y, leftDirection, currentState.cost + 1000, leftPositions));
 
             // rotate to the right (cost + 1000)
             int rightDirection = (currentState.direction + 1) % 4; // directions: 0 north, 1 east, 2 south, 3 west
-            stateQueue.add(new State(currentState.x, currentState.y, rightDirection, currentState.cost + 1000));
+            List<Position> rightPositions = new ArrayList<>(currentState.positions);
+            rightPositions.add(new Position(currentState.x, currentState.y));
+            stateQueue.add(new State(currentState.x, currentState.y, rightDirection, currentState.cost + 1000, rightPositions));
         }
 
-        return -1;
+        return new State(-1, -1, -1, -1, List.of());
     }
 
     // State class represents current states
     // Comparable<State> -> so priorityQueue orders by cost (lowest first)
-    static class State implements Comparable<State> {
+    private static class State implements Comparable<State> {
         int x;
         int y;
         int direction;
         int cost;
+        List<Position> positions;
 
-        public State(int x, int y, int direction, int cost) {
+        public State(int x, int y, int direction, int cost, List<Position> positions) {
             this.x = x;
             this.y = y;
             this.direction = direction;
             this.cost = cost;
+            this.positions = positions;
         }
 
         @Override
