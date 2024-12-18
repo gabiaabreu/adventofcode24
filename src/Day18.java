@@ -110,4 +110,43 @@ public class Day18 {
 
         return -1; // there's no possible path to end
     }
+
+    // BFS approach
+    // this time I dont care for costs, I just want to know if I can get to the end
+    static boolean canReachEnd(char[][] map, Position initialPosition) {
+        var startX = initialPosition.getRow();
+        var startY = initialPosition.getCol();
+
+        if (map[startX][startY] == '#' || map[SIZE - 1][SIZE - 1] == '#') {
+            return false; // start or end blocked
+        }
+
+        Queue<Position> queue = new LinkedList<>(); // not priority queue - cost doesn't matter
+        boolean[][] visited = new boolean[SIZE][SIZE];
+
+        queue.offer(new Position(startX, startY));
+        visited[startX][startY] = true;
+
+        while (!queue.isEmpty()) {
+            Position current = queue.poll();
+
+            if (current.getRow() == SIZE - 1 && current.getCol() == SIZE - 1) {
+                return true; // got to the end
+            }
+
+            // explore neighbour tiles without taking cost in consideration
+            for (int[] dir : DIRECTIONS) {
+                int newX = current.getRow() + dir[0];
+                int newY = current.getCol() + dir[1];
+
+                if (newX >= 0 && newX < SIZE && newY >= 0 && newY < SIZE
+                        && map[newX][newY] != '#' && !visited[newX][newY]) {
+                    visited[newX][newY] = true;
+                    queue.offer(new Position(newX, newY));
+                }
+            }
+        }
+
+        return false;
+    }
 }
