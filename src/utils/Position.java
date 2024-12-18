@@ -1,14 +1,16 @@
+package utils;
+
 import java.util.Objects;
 
 public class Position {
     private int row;
     private int col;
 
-    Position() {
+    public Position() {
 
     }
 
-    Position(int row, int col) {
+    public Position(int row, int col) {
         this.row = row;
         this.col = col;
     }
