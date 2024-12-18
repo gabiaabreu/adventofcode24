@@ -24,6 +24,7 @@ public class Day18 {
             return new Position(i, j);
         }).toList();
 
+        // ate aqui eu sei que tem saida
         var firstBytes = corruptedBytes.subList(0, 1024);
 
         char[][] memoryMap = new char[SIZE][SIZE];
@@ -42,6 +43,36 @@ public class Day18 {
         List<Position> positions = new ArrayList<>();
         var distance = walkMinimumDistance(memoryMap, new State(0, 0, 0, positions));
         System.out.println("Minimum steps to walk through memory space: " + distance);
+
+        // part two
+        for(int k = 1025; k < corruptedBytes.size(); k++) {
+            // adds 1 corrupted byte, tries to compute path til there's no path
+            var bytes = corruptedBytes.subList(0, k);
+            var byteCount = 0;
+
+            char[][] map = new char[SIZE][SIZE];
+            for (int i = 0; i < map.length; i++) {
+                Arrays.fill(map[i], '.');
+
+                for (int j = 0; j < map[0].length; j++) {
+                    if (bytes.contains(new Position(i, j))) {
+                        map[i][j] = '#';
+                    }
+                }
+            }
+
+            List<Position> newPositions = new ArrayList<>();
+            var newDistance = walkMinimumDistance(map, new State(0, 0, 0, newPositions));
+
+            if (newDistance == -1) {
+                byteCount = k;
+                var bytePosition = bytes.get(k - 1);
+
+                System.out.println("Byte that got in the way: " + byteCount);
+                System.out.println("Byte positions: " + bytePosition);
+                break;
+            }
+        }
     }
 
     // Dijkstra again!
@@ -89,6 +120,6 @@ public class Day18 {
             }
         }
 
-        return -1;
+        return -1; // there's no possible path to end
     }
 }
