@@ -9,11 +9,6 @@ import java.util.*;
 
 public class Day20 {
 
-    // each move takes 1 picosecond
-    // The goal is to reach the end position as quickly as possible.
-    // In this example racetrack, the fastest time is 84 picoseconds.
-    // there is only a single path from the start to the end
-
     private static final int[][] DIRECTIONS = {
             {-1, 0}, {1, 0}, {0, -1}, {0, 1} // (delta x, delta y) up, down, left, right
     };
@@ -46,16 +41,16 @@ public class Day20 {
         startPosition.setPositions(positions);
         endPosition.setPositions(positions);
 
-        var minTimeWithoutCheat = startRaceBFS(racetrack, startPosition, endPosition);
-        System.out.println("It takes " + minTimeWithoutCheat + " picoseconds to finish race without cheating");
+        var resultWithoutCheat = startRaceBFS(racetrack, startPosition, endPosition);
+        System.out.println("It takes " + resultWithoutCheat.getCost() + " picoseconds to finish race without cheating");
 
         // part one - cheat removing 1 wall
         var cheatCount = 0;
         for (var wall : walls) {
             racetrack[wall.getRow()][wall.getCol()] = '.';
 
-            var minTimeCheating = startRaceBFS(racetrack, startPosition, endPosition);
-            if (minTimeWithoutCheat - minTimeCheating >= 100) {
+            var minTimeCheating = startRaceBFS(racetrack, startPosition, endPosition).getCost();
+            if (resultWithoutCheat.getCost() - minTimeCheating >= 100) {
                 cheatCount++;
             }
 
@@ -63,9 +58,38 @@ public class Day20 {
         }
 
         System.out.println(cheatCount + " cheats could save me at least 100 picoseconds");
+
+        // part two
+        int[][] distances = startRaceDijkstra(racetrack, startPosition, endPosition);
+        List<Position> path = resultWithoutCheat.getPositions();
+
+        int biggerCheats = 0;
+        for (int i = 0; i < path.size(); i++) {
+            var posA = path.get(i);
+            var distanceFromStartToA = distances[posA.getRow()][posA.getCol()];
+
+            for (int j = i + 1; j < path.size(); j++) {
+                var posB = path.get(j);
+                var distanceFromStartToB = distances[posB.getRow()][posB.getCol()];
+
+                    int manhattanDistance = Math.abs(posA.getRow() - posB.getRow())
+                            + Math.abs(posA.getCol() - posB.getCol());
+
+                    if (manhattanDistance <= 20) {
+                        var distanceFromBToEnd = resultWithoutCheat.getCost() - distanceFromStartToB;
+                        var totalDistance = distanceFromStartToA + manhattanDistance + distanceFromBToEnd;
+
+                        if (resultWithoutCheat.getCost() - totalDistance >= 100) {
+                            biggerCheats++;
+                        }
+                    }
+            }
+        }
+
+        System.out.println(biggerCheats + " cheats would save me at least 100ps");
     }
 
-    private static int startRaceBFS(char[][] map, State initialState, State targetState) {
+    private static State startRaceBFS(char[][] map, State initialState, State targetState) {
         var startX = initialState.getX();
         var startY = initialState.getY();
 
@@ -79,28 +103,30 @@ public class Day20 {
             State current = queue.poll();
 
             if (current.getX() == targetState.getX() && current.getY() == targetState.getY()) {
-                return current.getCost();
+                return current;
             }
 
             for (int[] dir : DIRECTIONS) {
                 int newX = current.getX() + dir[0];
                 int newY = current.getY() + dir[1];
                 var currentPositions = current.getPositions();
-                currentPositions.add(new Position(newX, newY));
 
                 if (newX >= 0 && newX < map.length && newY >= 0 && newY < map[0].length
                         && map[newX][newY] != '#' && !visited[newX][newY]) {
                     visited[newX][newY] = true;
+
+                    currentPositions.add(new Position(newX, newY));
                     queue.offer(new State(newX, newY, current.getCost() + 1, currentPositions));
                 }
             }
         }
 
-        return -1;
+        return new State(-1, -1, -1);
     }
 
     // I dont need Dijkstra to find the shortest path because I know there's only 1 path
-    private static int startRaceDijkstra(char[][] racetrack, State initialState, State targetState) {
+    // but it's useful to store nodes distance from starting point
+    private static int[][] startRaceDijkstra(char[][] racetrack, State initialState, State targetState) {
         int[][] trackTime = new int[racetrack.length][racetrack[0].length];
         for (int[] row : trackTime) Arrays.fill(row, Integer.MAX_VALUE);
 
@@ -115,7 +141,7 @@ public class Day20 {
             var y = currentState.getY();
 
             if (x == targetState.getX() && y == targetState.getY()) {
-                return currentState.getCost();
+                return trackTime;
             }
 
             for (int[] direction : DIRECTIONS) {
@@ -138,6 +164,6 @@ public class Day20 {
             }
         }
 
-        return -1;
+        return new int[][]{};
     }
 }
